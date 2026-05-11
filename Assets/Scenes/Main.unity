@@ -434,7 +434,7 @@ MonoBehaviour:
     y: -4
     width: 10
     height: 8
-  centeringStrength: 0.02
+  centeringStrength: 0.67
   velocityMatchingLerpFaktor: 0.01
   neighborActorCount: 3
   drawNeighbors: 1

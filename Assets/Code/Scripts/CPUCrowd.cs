@@ -51,7 +51,6 @@ namespace Crowds
             // velocity matching
             // crowd centering
 
-            // calculating crowd center position
             for (int i = 0; i < actorCount; i++)
             {
                 Actor currentActor = actors[i];
@@ -71,6 +70,8 @@ namespace Crowds
                 }
 
                 Vector2 localCenterPosition = positionAccumulator / (neighborActorCount + 1);
+                Vector2 directionToLocalCenter = (localCenterPosition - currentActor.position).normalized;
+
                 Vector2 localVelocity = velocityAccumulator / (neighborActorCount + 1); 
 
                 if (drawNeighbors && i == 0)
@@ -78,11 +79,10 @@ namespace Crowds
                     localCenterPositionFirstActor = localCenterPosition;
                 }
 
-                Vector2 directionToLocalCenter = (localCenterPosition - currentActor.position).normalized;
-
-                currentActor.velocity = Vector2.Lerp(currentActor.velocity, localVelocity, velocityMatchingLerpFaktor);
-                currentActor.velocity += directionToLocalCenter * centeringStrength;
-                
+                // currentActor.velocity = Vector2.Lerp(currentActor.velocity, localVelocity, velocityMatchingLerpFaktor);
+               
+                // acceleration:  m/s^2  velocity: m/s  
+                currentActor.velocity += (directionToLocalCenter * Time.deltaTime) * centeringStrength;
 
                 currentActor.position += currentActor.velocity * Time.deltaTime;
             }
