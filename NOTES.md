@@ -7,6 +7,12 @@
 Each actor only has a local perception of "x" nearest neighbors. 
 How do we get access to the neares neighbors?
 
+What knowledge do we need from the neighbors: 
+
+- average velocty (velocity matching)
+- average position (centering) 
+- position for collision avoidance
+
 #### Naive Approach (SLOW)
 
 - Keep a collection of the "x" nearest neighbors. 
