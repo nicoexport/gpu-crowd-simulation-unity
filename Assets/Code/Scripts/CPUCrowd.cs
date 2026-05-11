@@ -23,6 +23,7 @@ namespace Crowds
         [SerializeField] private Rect spawnRect = new();
 
         [SerializeField] private float centeringStrength = 0.3f;
+        [SerializeField] private float velocityMatchingLerpFaktor = 0.5f;
 
         [SerializeField] private int neighborActorCount = 3;
 
@@ -35,7 +36,7 @@ namespace Crowds
         [Header("Debug")]
         [SerializeField] private bool drawNeighbors = true;
         private List<Actor> neighborActorsFirstActor = new();
-        private Vector2 neighborCenterFirstActor = Vector2.zero;
+        private Vector2 localCenterPositionFirstActor = Vector2.zero;
 
         protected void Start()
         {
@@ -56,19 +57,32 @@ namespace Crowds
                 Actor currentActor = actors[i];
                 DetermineNeighbors(i);
 
+
+                // local crowd centering
                 Vector2 positionAccumulator = Vector2.zero;
+                Vector2 velocityAccumulator = Vector2.zero; 
+
                 positionAccumulator += currentActor.position;
                 for (int j = 0; j < neighborActorCount; j++)
                 {
                     Actor neighbor = neighborActors[j];
                     positionAccumulator += neighbor.position;
+                    velocityAccumulator += neighbor.velocity;
                 }
-                Vector2 centerPosition = positionAccumulator / (neighborActorCount + 1);
+
+                Vector2 localCenterPosition = positionAccumulator / (neighborActorCount + 1);
+                Vector2 localVelocity = velocityAccumulator / (neighborActorCount + 1); 
 
                 if (drawNeighbors && i == 0)
                 {
-                    neighborCenterFirstActor = centerPosition;
+                    localCenterPositionFirstActor = localCenterPosition;
                 }
+
+                Vector2 directionToLocalCenter = (localCenterPosition - currentActor.position).normalized;
+
+                currentActor.velocity = Vector2.Lerp(currentActor.velocity, localVelocity, velocityMatchingLerpFaktor);
+                currentActor.velocity += directionToLocalCenter * centeringStrength;
+                
 
                 currentActor.position += currentActor.velocity * Time.deltaTime;
             }
@@ -195,7 +209,7 @@ namespace Crowds
                 }
 
                 Gizmos.color = Color.red;
-                Gizmos.DrawWireSphere(neighborCenterFirstActor, 0.15f);
+                Gizmos.DrawWireSphere(localCenterPositionFirstActor, 0.15f);
             }
         }
     }

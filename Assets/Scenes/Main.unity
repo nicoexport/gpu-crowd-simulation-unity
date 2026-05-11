@@ -427,14 +427,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e1ce75204ad8fc4b876af9dc364b655, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Crowds.CPUCrowd
-  actorCount: 59
+  actorCount: 100
   spawnRect:
     serializedVersion: 2
     x: -5
     y: -4
     width: 10
     height: 8
-  centeringStrength: 0.01
+  centeringStrength: 0.02
+  velocityMatchingLerpFaktor: 0.01
   neighborActorCount: 3
   drawNeighbors: 1
 --- !u!1660057539 &9223372036854775807
