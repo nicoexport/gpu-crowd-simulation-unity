@@ -23,9 +23,13 @@ namespace Crowds
         [SerializeField] private Rect spawnRect = new();
 
         [SerializeField] private float centeringStrength = 0.3f;
-        [SerializeField] private float velocityMatchingLerpFaktor = 0.5f;
+        [SerializeField] private float globalTargetStrenth = 0.67f;
+        [SerializeField] private float velocityMatchingStrength = 0.5f;
 
         [SerializeField] private int neighborActorCount = 3;
+
+        [Header("Target")]
+        [SerializeField] private Transform globalTargetTransform;
 
         private Actor[] actors;
 
@@ -81,8 +85,17 @@ namespace Crowds
 
                 // currentActor.velocity = Vector2.Lerp(currentActor.velocity, localVelocity, velocityMatchingLerpFaktor);
                
+
                 // acceleration:  m/s^2  velocity: m/s  
+                // local centering
                 currentActor.velocity += (directionToLocalCenter * Time.deltaTime) * centeringStrength;
+                // global target following
+                if (globalTargetTransform)
+                {
+                    Vector2 globalTargetPosition = globalTargetTransform.position;
+                    Vector2 directionToGlobalTarget = (globalTargetPosition - currentActor.position).normalized;
+                    currentActor.velocity += (directionToGlobalTarget * Time.deltaTime) * globalTargetStrenth;
+                }
 
                 currentActor.position += currentActor.velocity * Time.deltaTime;
             }
