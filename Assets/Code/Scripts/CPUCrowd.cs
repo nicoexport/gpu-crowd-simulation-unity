@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
 using Utility;
 
 namespace Crowds
@@ -27,17 +26,16 @@ namespace Crowds
 
         [SerializeField] private int neighborActorCount = 3;
 
-
-        [Header("Debug")]
-        [SerializeField] private bool drawNeighbors = true;
-
         private Actor[] actors;
 
-        List<Actor> neighborActors = new List<Actor>();
-        List<float> neighborDistances = new List<float>();
+        private List<Actor> neighborActors = new();
+        private List<float> neighborDistances = new();
 
         // DEBUG
-        List<Actor> neighborActorsFirstActor = new List<Actor>();
+        [Header("Debug")]
+        [SerializeField] private bool drawNeighbors = true;
+        private List<Actor> neighborActorsFirstActor = new();
+        private Vector2 neighborCenterFirstActor = Vector2.zero;
 
         protected void Start()
         {
@@ -57,9 +55,23 @@ namespace Crowds
             {
                 Actor currentActor = actors[i];
                 DetermineNeighbors(i);
-                
-                currentActor.position = currentActor.position + currentActor.velocity * Time.deltaTime;
-            }       
+
+                Vector2 positionAccumulator = Vector2.zero;
+                positionAccumulator += currentActor.position;
+                for (int j = 0; j < neighborActorCount; j++)
+                {
+                    Actor neighbor = neighborActors[j];
+                    positionAccumulator += neighbor.position;
+                }
+                Vector2 centerPosition = positionAccumulator / (neighborActorCount + 1);
+
+                if (drawNeighbors && i == 0)
+                {
+                    neighborCenterFirstActor = centerPosition;
+                }
+
+                currentActor.position += currentActor.velocity * Time.deltaTime;
+            }
         }
 
         protected void OnDrawGizmos()
@@ -80,7 +92,7 @@ namespace Crowds
                 Vector2 position = new(positionX, positionY);
 
                 float dirX = Random.Range(-1.0f, 1.0f);
-                float dirY = Random.Range(-1.0f, 1.0f); 
+                float dirY = Random.Range(-1.0f, 1.0f);
                 Vector2 direction = new Vector2(dirX, dirY).normalized;
                 float velocityMagnitude = Random.Range(0.0f, 1.0f);
 
@@ -96,7 +108,7 @@ namespace Crowds
             neighborActors.Clear();
             neighborDistances.Clear();
 
-            var currentActor = actors[currentIndex];    
+            Actor currentActor = actors[currentIndex];
 
             for (int i = 0; i < actorCount; i++)
             {
@@ -178,9 +190,12 @@ namespace Crowds
                 Gizmos.color = Color.yellow;
                 for (int i = 0; i < neighborActorsFirstActor.Count; i++)
                 {
-                    var neighbor = neighborActorsFirstActor[i];
+                    Actor neighbor = neighborActorsFirstActor[i];
                     Gizmos.DrawSphere(neighbor.position, 0.15f);
                 }
+
+                Gizmos.color = Color.red;
+                Gizmos.DrawWireSphere(neighborCenterFirstActor, 0.15f);
             }
         }
     }
