@@ -25,6 +25,8 @@ namespace Crowds
         [SerializeField] private float centeringStrength = 0.3f;
         [SerializeField] private float globalTargetStrenth = 0.67f;
         [SerializeField] private float velocityMatchingStrength = 0.5f;
+        [SerializeField] private float collisionAvoidanceStrength = 0.5f;
+        [SerializeField] private float collisionAvoidanceRadius = 0.5f;
 
         [SerializeField] private int neighborActorCount = 3;
 
@@ -65,6 +67,7 @@ namespace Crowds
                 Vector2 positionAccumulator = Vector2.zero;
                 Vector2 velocityAccumulator = Vector2.zero; 
 
+
                 positionAccumulator += currentActor.position;
                 for (int j = 0; j < neighborActorCount; j++)
                 {
@@ -74,9 +77,9 @@ namespace Crowds
                 }
 
                 Vector2 localCenterPosition = positionAccumulator / (neighborActorCount + 1);
-                Vector2 directionToLocalCenter = (localCenterPosition - currentActor.position).normalized;
+                Vector2 vectorToLocalCenter = (localCenterPosition - currentActor.position);
 
-                Vector2 localVelocity = velocityAccumulator / (neighborActorCount + 1); 
+                Vector2 localAverageVelocity = velocityAccumulator / (neighborActorCount + 1); 
 
                 if (drawNeighbors && i == 0)
                 {
@@ -84,19 +87,47 @@ namespace Crowds
                 }
 
                 // currentActor.velocity = Vector2.Lerp(currentActor.velocity, localVelocity, velocityMatchingLerpFaktor);
-               
+
 
                 // acceleration:  m/s^2  velocity: m/s  
-                // local centering
-                currentActor.velocity += (directionToLocalCenter * Time.deltaTime) * centeringStrength;
-                // global target following
+
+                // 1. --- collision avoidance ---
+                // for  now simple neighbor avoidance.
+                // if the distance between current actor and its neighbor is smaller then a given collision threshold calculate a velocity away from the neighbor
+                // to improve this a quick google search resulted in either Optimal Reciprocal Collision Avoidance (ORCA) or Social Force Model (Repulsive Forces)
+                Vector2 collisionAvoidanceAccumulator = Vector2.zero;
+                int collisionAvoidanceAccumulatorCount = 0;
+                for (int j = 0; j < neighborActorCount; j++)
+                {
+                    Actor neighbor = neighborActors[j];
+                    float distanceToNeighbor = Vector2.Distance(currentActor.position, neighbor.position);
+                    if (distanceToNeighbor < collisionAvoidanceRadius)
+                    {
+                        collisionAvoidanceAccumulatorCount++;
+                        var force = (currentActor.position - neighbor.position).normalized * (collisionAvoidanceRadius - distanceToNeighbor);
+                        collisionAvoidanceAccumulator += force;
+                    }
+                }
+                if (collisionAvoidanceAccumulatorCount > 0)
+                {
+                    Vector2 averageCollisionAvoidanceVector = collisionAvoidanceAccumulator / collisionAvoidanceAccumulatorCount;
+                    currentActor.velocity += (averageCollisionAvoidanceVector * Time.deltaTime) * collisionAvoidanceStrength;
+                }
+
+                // --- 2. global target following ---
                 if (globalTargetTransform)
                 {
                     Vector2 globalTargetPosition = globalTargetTransform.position;
                     Vector2 directionToGlobalTarget = (globalTargetPosition - currentActor.position).normalized;
                     currentActor.velocity += (directionToGlobalTarget * Time.deltaTime) * globalTargetStrenth;
                 }
+                // --- 3. velocity matching ---
+                Vector2 velocityMathchingSteerAcceleration = (localAverageVelocity - currentActor.velocity) * velocityMatchingStrength;
+                currentActor.velocity += velocityMathchingSteerAcceleration * Time.deltaTime;
+                // --- 4. local centering ---
+                currentActor.velocity += (vectorToLocalCenter * Time.deltaTime) * centeringStrength;
 
+                // update position based on velocity
                 currentActor.position += currentActor.velocity * Time.deltaTime;
             }
         }
@@ -146,14 +177,14 @@ namespace Crowds
                 }
 
                 Actor otherActor = actors[i];
-                float otherDistanceSquared = Vector2.Distance(otherActor.position, currentActor.position);
+                float otherDistance = Vector2.Distance(otherActor.position, currentActor.position);
 
                 int insertIndex = -1;
 
                 // finding insertion index 
                 for (int j = 0; j < neighborDistances.Count; j++)
                 {
-                    if (otherDistanceSquared < neighborDistances[j])
+                    if (otherDistance < neighborDistances[j])
                     {
                         insertIndex = j;
                         break;
@@ -166,14 +197,14 @@ namespace Crowds
                     if (neighborActors.Count < neighborActorCount)
                     {
                         neighborActors.Add(otherActor);
-                        neighborDistances.Add(otherDistanceSquared);
+                        neighborDistances.Add(otherDistance);
                     }
                     continue;
                 }
 
                 // insertion index found
                 neighborActors.Insert(insertIndex, otherActor);
-                neighborDistances.Insert(insertIndex, otherDistanceSquared);
+                neighborDistances.Insert(insertIndex, otherDistance);
 
                 // trim to max size
                 if (neighborActors.Count > neighborActorCount)
