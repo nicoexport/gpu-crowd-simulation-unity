@@ -44,6 +44,38 @@ This is based on a strict ordering of all component behaviours. The acceleration
 
 This ensures that the most relevant urges are satisfied first while lower priority ones, like the flock centering urge can be skipped temporarily.
 
+## Collision Avoidance 
+
+The current implemented mechnism for collision avoidance is based on simple forece fields. If an actor is in the colldion avoidace radius of a neighboring actor, a force pointing away from the neighbor is calculated and added to the current velocity of the actor.
+
+According to a quick Google search  another possible (better) approache could be Optimal Reciprocal Collision Avoidance (ORCA). Need to look further into this. 
+
+### Force Field
+
+```c#
+Vector2 force = (currentActor.position - neighbor.position).normalized * (collisionAvoidanceRadius - distanceToNeighbor);
+```
+## Local Perception and finding Neighbors
+
+Each actor only has a local perception of "x" nearest neighbors. 
+How do we get access to the neares neighbors?
+
+What knowledge do we need from the neighbors: 
+
+- average velocty (velocity matching)
+- average position (centering) 
+- position for collision avoidance
+
+### Naive Approach (SLOW)
+
+- Keep a collection of the "x" nearest neighbors. 
+- Loop over all neighbors and update the collection. 
+
+Complexity: n * n * x ? (n = total number of actors)
+
+### Spatial Data Structures (FASTER)
+
+Running a preprocess step that sorts the actors into a spatial data structure makes this way faster. A option that is currently considered for this is a Quad-Tree for two dimensions and a Oct-Tree for three dimensions.  
 
 # Sources 
 Craig W. Reynolds. 1987. Flocks, herds and schools: A distributed behavioral model. SIGGRAPH Comput. Graph. 21, 4 (July 1987), 25–34. [doi](https://doi.org/10.1145/37402.37406)
