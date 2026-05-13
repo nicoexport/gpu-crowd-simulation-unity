@@ -468,6 +468,8 @@ MonoBehaviour:
   centeringStrength: 0.67
   globalTargetStrenth: 2.5
   velocityMatchingStrength: 0.5
+  collisionAvoidanceStrength: 1.5
+  collisionAvoidanceRadius: 2
   neighborActorCount: 3
   globalTargetTransform: {fileID: 768759294}
   drawNeighbors: 1

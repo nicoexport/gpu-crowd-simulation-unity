@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Utility;
 
 namespace Crowds
 {
@@ -65,7 +64,7 @@ namespace Crowds
 
                 // local crowd centering
                 Vector2 positionAccumulator = Vector2.zero;
-                Vector2 velocityAccumulator = Vector2.zero; 
+                Vector2 velocityAccumulator = Vector2.zero;
 
 
                 positionAccumulator += currentActor.position;
@@ -77,9 +76,9 @@ namespace Crowds
                 }
 
                 Vector2 localCenterPosition = positionAccumulator / (neighborActorCount + 1);
-                Vector2 vectorToLocalCenter = (localCenterPosition - currentActor.position);
+                Vector2 vectorToLocalCenter = localCenterPosition - currentActor.position;
 
-                Vector2 localAverageVelocity = velocityAccumulator / (neighborActorCount + 1); 
+                Vector2 localAverageVelocity = velocityAccumulator / (neighborActorCount + 1);
 
                 if (drawNeighbors && i == 0)
                 {
@@ -104,14 +103,14 @@ namespace Crowds
                     if (distanceToNeighbor < collisionAvoidanceRadius)
                     {
                         collisionAvoidanceAccumulatorCount++;
-                        var force = (currentActor.position - neighbor.position).normalized * (collisionAvoidanceRadius - distanceToNeighbor);
+                        Vector2 force = (currentActor.position - neighbor.position).normalized * (collisionAvoidanceRadius - distanceToNeighbor);
                         collisionAvoidanceAccumulator += force;
                     }
                 }
                 if (collisionAvoidanceAccumulatorCount > 0)
                 {
                     Vector2 averageCollisionAvoidanceVector = collisionAvoidanceAccumulator / collisionAvoidanceAccumulatorCount;
-                    currentActor.velocity += (averageCollisionAvoidanceVector * Time.deltaTime) * collisionAvoidanceStrength;
+                    currentActor.velocity += averageCollisionAvoidanceVector * Time.deltaTime * collisionAvoidanceStrength;
                 }
 
                 // --- 2. global target following ---
@@ -119,13 +118,13 @@ namespace Crowds
                 {
                     Vector2 globalTargetPosition = globalTargetTransform.position;
                     Vector2 directionToGlobalTarget = (globalTargetPosition - currentActor.position).normalized;
-                    currentActor.velocity += (directionToGlobalTarget * Time.deltaTime) * globalTargetStrenth;
+                    currentActor.velocity += directionToGlobalTarget * Time.deltaTime * globalTargetStrenth;
                 }
                 // --- 3. velocity matching ---
                 Vector2 velocityMathchingSteerAcceleration = (localAverageVelocity - currentActor.velocity) * velocityMatchingStrength;
                 currentActor.velocity += velocityMathchingSteerAcceleration * Time.deltaTime;
                 // --- 4. local centering ---
-                currentActor.velocity += (vectorToLocalCenter * Time.deltaTime) * centeringStrength;
+                currentActor.velocity += vectorToLocalCenter * Time.deltaTime * centeringStrength;
 
                 // update position based on velocity
                 currentActor.position += currentActor.velocity * Time.deltaTime;
@@ -134,8 +133,14 @@ namespace Crowds
 
         protected void OnDrawGizmos()
         {
-            DebugDrawingUtility.DrawRect(spawnRect, Color.white);
+            //DebugDrawingUtility.DrawRect(spawnRect, Color.white);
             DrawActorGizmos();
+
+            if (globalTargetTransform)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireSphere(globalTargetTransform.position, 0.25f);
+            }
         }
 
         private void SpawnActors()
@@ -230,17 +235,21 @@ namespace Crowds
 
             for (int i = 0; i < actorCount; i++)
             {
+                Actor actor = actors[i];
                 Gizmos.color = Color.cyan;
+
                 if (i == 0 && drawNeighbors)
                 {
+                    Gizmos.color = Color.magenta;
+                    Gizmos.DrawWireSphere(actor.position, collisionAvoidanceRadius);
+
                     Gizmos.color = Color.orange;
                 }
 
-                Actor actor = actors[i];
                 Vector2 position = actor.position;
-                Vector2 velocity = actor.velocity;
+                _ = actor.velocity;
                 Gizmos.DrawSphere(position, 0.15f);
-                DebugDrawingUtility.DrawArrowGizmo(position, velocity * 0.5f);
+                //DebugDrawingUtility.DrawArrowGizmo(position, velocity * 0.5f);
             }
 
             if (drawNeighbors)
